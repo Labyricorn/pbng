@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prompt Builder NG</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="favicon.ico">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <h1><i class="fa-solid fa-cubes"></i> Prompt Builder NG</h1>
+        <nav>
+            <!-- Future navigation -->
+        </nav>
+    </header>
+    <main class="three-panel">
+        <section id="snippet-library" class="panel">
+            <h2>Snippet Library</h2>
+            <form id="snippet-form">
+                <input type="text" id="snippet-title" placeholder="Title" required>
+                <input type="text" id="snippet-category" placeholder="Category" required>
+                <input type="text" id="snippet-tags" placeholder="Tags (comma separated)">
+                <textarea id="snippet-content" placeholder="Content" required style="width:100%;margin-bottom:0.5rem;"></textarea>
+                <input type="text" id="snippet-description" placeholder="Description">
+                <button type="submit">Add Snippet</button>
+            </form>
+            <input type="text" id="snippet-search" placeholder="Search snippets...">
+            <div id="snippet-categories"></div>
+            <ul id="snippet-list">
+                <!-- Snippet items will be loaded here -->
+            </ul>
+        </section>
+        <section id="prompt-builder" class="panel">
+            <h2>Prompt Builder</h2>
+            <div id="builder-dropzone">
+                <p>Drag snippets here to build your prompt</p>
+                <ul id="builder-list">
+                    <!-- Dropped snippets will appear here -->
+                </ul>
+            </div>
+            <button id="save-prompt"><i class="fa-solid fa-save"></i> Save Prompt</button>
+        </section>
+        <section id="live-preview" class="panel">
+            <h2>Live Preview</h2>
+            <div class="preview-toggle">
+                <button id="preview-markdown" class="active">Markdown</button>
+                <button id="preview-json">JSON</button>
+            </div>
+            <div id="preview-content" class="markdown-preview">
+                <!-- Rendered preview will appear here -->
+            </div>
+        </section>
+    </main>
+    <div id="toast" class="toast"></div>
+    <script src="main.js"></script>
+</body>
+</html> 
