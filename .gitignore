@@ -1,0 +1,12 @@
+pbng_env/
+__pycache__/
+*.pyc
+instance/
+.env
+*.sqlite3
+db.sqlite3
+migrations/__pycache__/
+*.db
+.DS_Store
+.idea/
+.vscode/
