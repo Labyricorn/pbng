@@ -49,7 +49,7 @@ A modern web application for visual AI prompt engineering with drag-and-drop fun
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/Labyricorn/pbng
    cd pbng-cursor-v1-0
    ```
 
