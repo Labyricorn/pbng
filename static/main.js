@@ -14,6 +14,7 @@ const snippetContent = document.getElementById('snippet-content');
 const snippetDescription = document.getElementById('snippet-description');
 const snippetSearch = document.getElementById('snippet-search');
 const snippetCategories = document.getElementById('snippet-categories');
+const copyPreviewBtn = document.getElementById('copy-preview');
 
 // Modal elements
 const createSnippetBtn = document.getElementById('create-snippet-btn');
@@ -226,6 +227,24 @@ previewJsonBtn.onclick = () => {
   previewMarkdownBtn.classList.remove('active');
   updatePreview();
 };
+
+copyPreviewBtn.addEventListener('click', () => {
+  let text = '';
+  if (previewMode === 'markdown') {
+    text = builderSnippets.map(s => s.content).join('\n\n');
+  } else {
+    text = JSON.stringify(builderSnippets.map(s => ({ item: s.item, content: s.content })), null, 2);
+  }
+  if (text) {
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('Copied to clipboard!');
+    }, () => {
+      showToast('Failed to copy');
+    });
+  } else {
+    showToast('Nothing to copy');
+  }
+});
 
 // --- Modal Functions ---
 function openModal() {
