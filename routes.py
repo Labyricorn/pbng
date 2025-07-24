@@ -14,11 +14,11 @@ def list_snippets():
     if category:
         query = query.filter_by(category=category)
     if search:
-        query = query.filter(Snippet.title.ilike(f'%{search}%') | Snippet.description.ilike(f'%{search}%'))
+        query = query.filter(Snippet.item.ilike(f'%{search}%') | Snippet.description.ilike(f'%{search}%'))
     snippets = query.order_by(Snippet.created_at.desc()).all()
     return jsonify([{
         'id': s.id,
-        'title': s.title,
+        'item': s.item,
         'description': s.description,
         'content': s.content,
         'category': s.category,
@@ -31,7 +31,7 @@ def list_snippets():
 def create_snippet():
     data = request.get_json()
     snippet = Snippet(
-        title=data.get('title'),
+        item=data.get('item'),
         description=data.get('description'),
         content=data.get('content'),
         category=data.get('category'),
@@ -45,7 +45,7 @@ def create_snippet():
 def update_snippet(id):
     snippet = Snippet.query.get_or_404(id)
     data = request.get_json()
-    snippet.title = data.get('title', snippet.title)
+    snippet.item = data.get('item', snippet.item)
     snippet.description = data.get('description', snippet.description)
     snippet.content = data.get('content', snippet.content)
     snippet.category = data.get('category', snippet.category)
