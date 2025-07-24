@@ -262,7 +262,8 @@ function closeModal() {
 function openEditModal(snippet) {
   currentEditingSnippet = snippet;
   editSnippetItem.value = snippet.item;
-  editSnippetCategory.value = snippet.category;
+  // Populate categories and set selected
+  populateCategoryDropdowns(snippet.category, true);
   editSnippetTags.value = snippet.tags ? snippet.tags.join(', ') : '';
   editSnippetContent.value = snippet.content;
   editSnippetDescription.value = snippet.description || '';
@@ -278,7 +279,10 @@ function closeEditModal() {
 }
 
 // --- Modal Event Listeners ---
-createSnippetBtn.addEventListener('click', openModal);
+createSnippetBtn.addEventListener('click', async () => {
+  await populateCategoryDropdowns();
+  showOtherCategoryInput(false, ''); // Hide by default
+});
 closeSnippetModal.addEventListener('click', closeModal);
 cancelSnippet.addEventListener('click', closeModal);
 
@@ -312,9 +316,14 @@ document.addEventListener('keydown', (e) => {
 
 snippetForm.addEventListener('submit', async (e) => {
   e.preventDefault();
+  let categoryValue = snippetCategory.value;
+  if (categoryValue === '__other__') {
+    const otherInput = document.getElementById('other-category');
+    categoryValue = otherInput ? otherInput.value : '';
+  }
   const data = {
     item: snippetItem.value,
-    category: snippetCategory.value,
+    category: categoryValue,
     tags: snippetTags.value.split(',').map(t => t.trim()).filter(Boolean),
     content: snippetContent.value,
     description: snippetDescription.value
@@ -338,9 +347,14 @@ editSnippetForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   if (!currentEditingSnippet) return;
   
+  let categoryValue = editSnippetCategory.value;
+  if (categoryValue === '__other__') {
+    const otherInput = document.getElementById('edit-other-category');
+    categoryValue = otherInput ? otherInput.value : '';
+  }
   const data = {
     item: editSnippetItem.value,
-    category: editSnippetCategory.value,
+    category: categoryValue,
     tags: editSnippetTags.value.split(',').map(t => t.trim()).filter(Boolean),
     content: editSnippetContent.value,
     description: editSnippetDescription.value
@@ -588,3 +602,156 @@ function debounce(func, wait) {
 // --- Initial Load ---
 // Call this function immediately since the script is loaded at the bottom of the page
 ensureTestSnippets(); 
+
+// --- Category Dropdown Logic ---
+async function populateCategoryDropdowns(selectedValue = '', isEdit = false) {
+  const select = isEdit ? editSnippetCategory : snippetCategory;
+  select.innerHTML = '';
+  try {
+    const res = await fetch('/api/categories');
+    let categories = [];
+    if (res.ok) {
+      categories = await res.json();
+    }
+    if (categories.length === 0) {
+      const opt = document.createElement('option');
+      opt.value = '';
+      opt.textContent = 'No categories yet';
+      select.appendChild(opt);
+    } else {
+      categories.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        select.appendChild(opt);
+      });
+    }
+    // Add 'Other...' option
+    const otherOpt = document.createElement('option');
+    otherOpt.value = '__other__';
+    otherOpt.textContent = 'Other...';
+    select.appendChild(otherOpt);
+    // Set selected value
+    if (selectedValue && categories.includes(selectedValue)) {
+      select.value = selectedValue;
+    } else if (selectedValue) {
+      select.value = '__other__';
+      showOtherCategoryInput(isEdit, selectedValue);
+    } else {
+      select.value = '';
+      hideOtherCategoryInput(isEdit);
+    }
+  } catch (e) {
+    select.innerHTML = '<option value="">Error loading categories</option>';
+  }
+}
+
+function showOtherCategoryInput(isEdit, value = '') {
+  let inputId = isEdit ? 'edit-other-category' : 'other-category';
+  let select = isEdit ? editSnippetCategory : snippetCategory;
+  let formGroup = select.parentElement;
+  let existing = document.getElementById(inputId);
+  if (!existing) {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.id = inputId;
+    input.placeholder = 'Enter new category';
+    input.required = true;
+    input.className = 'other-category-input';
+    formGroup.appendChild(input);
+    input.value = value || '';
+  } else {
+    existing.style.display = '';
+    existing.value = value || '';
+  }
+}
+
+function hideOtherCategoryInput(isEdit) {
+  let inputId = isEdit ? 'edit-other-category' : 'other-category';
+  let existing = document.getElementById(inputId);
+  if (existing) {
+    existing.style.display = 'none';
+    existing.value = '';
+  }
+}
+
+snippetCategory.addEventListener('change', function() {
+  if (this.value === '__other__') {
+    showOtherCategoryInput(false);
+  } else {
+    hideOtherCategoryInput(false);
+  }
+});
+editSnippetCategory.addEventListener('change', function() {
+  if (this.value === '__other__') {
+    showOtherCategoryInput(true);
+  } else {
+    hideOtherCategoryInput(true);
+  }
+});
+
+// --- Modal Open Hooks ---
+createSnippetBtn.addEventListener('click', async () => {
+  await populateCategoryDropdowns();
+  showOtherCategoryInput(false, ''); // Hide by default
+});
+
+// --- Form Submission Adjustments ---
+snippetForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  let categoryValue = snippetCategory.value;
+  if (categoryValue === '__other__') {
+    const otherInput = document.getElementById('other-category');
+    categoryValue = otherInput ? otherInput.value : '';
+  }
+  const data = {
+    item: snippetItem.value,
+    category: categoryValue,
+    tags: snippetTags.value.split(',').map(t => t.trim()).filter(Boolean),
+    content: snippetContent.value,
+    description: snippetDescription.value
+  };
+  const res = await fetch('/api/snippets', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  if (res.ok) {
+    showToast('Snippet created successfully!');
+    closeModal();
+    loadSnippets();
+  } else {
+    showToast('Failed to create snippet');
+  }
+});
+
+editSnippetForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!currentEditingSnippet) return;
+  let categoryValue = editSnippetCategory.value;
+  if (categoryValue === '__other__') {
+    const otherInput = document.getElementById('edit-other-category');
+    categoryValue = otherInput ? otherInput.value : '';
+  }
+  const data = {
+    item: editSnippetItem.value,
+    category: categoryValue,
+    tags: editSnippetTags.value.split(',').map(t => t.trim()).filter(Boolean),
+    content: editSnippetContent.value,
+    description: editSnippetDescription.value
+  };
+  
+  const res = await fetch(`/api/snippets/${currentEditingSnippet.id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  
+  if (res.ok) {
+    showToast('Snippet updated successfully!');
+    closeEditModal();
+    loadSnippets();
+  } else {
+    showToast('Failed to update snippet');
+  }
+}); 

@@ -156,3 +156,10 @@ def process_form_fields():
         return str(values.get(key, f'[{key}]'))
     processed = re.sub(r'\[([a-zA-Z0-9_]+)\]', replacer, content)
     return jsonify({'processed': processed})
+
+@api_bp.route('/categories', methods=['GET'])
+def list_categories():
+    categories = db.session.query(Snippet.category).distinct().all()
+    # Flatten list of tuples
+    categories = [c[0] for c in categories]
+    return jsonify(categories)
