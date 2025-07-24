@@ -19,6 +19,20 @@ const createSnippetModal = document.getElementById('create-snippet-modal');
 const closeSnippetModal = document.getElementById('close-snippet-modal');
 const cancelSnippet = document.getElementById('cancel-snippet');
 
+// Edit modal elements
+const editSnippetModal = document.getElementById('edit-snippet-modal');
+const closeEditModal = document.getElementById('close-edit-modal');
+const cancelEdit = document.getElementById('cancel-edit');
+const editSnippetForm = document.getElementById('edit-snippet-form');
+const editSnippetTitle = document.getElementById('edit-snippet-title');
+const editSnippetCategory = document.getElementById('edit-snippet-category');
+const editSnippetTags = document.getElementById('edit-snippet-tags');
+const editSnippetContent = document.getElementById('edit-snippet-content');
+const editSnippetDescription = document.getElementById('edit-snippet-description');
+const deleteSnippetBtn = document.getElementById('delete-snippet');
+
+let currentEditingSnippet = null;
+
 let snippets = [];
 let builderSnippets = [];
 let previewMode = 'markdown';
@@ -63,19 +77,15 @@ function renderSnippetList() {
 
     li.appendChild(content);
 
-    // Delete button
-    const delBtn = document.createElement('button');
-    delBtn.innerHTML = '<i class="fa fa-trash"></i>';
-    delBtn.className = 'delete-btn';
-    delBtn.onclick = async (e) => {
+    // Menu button (sandwich menu)
+    const menuBtn = document.createElement('button');
+    menuBtn.innerHTML = '<i class="fa fa-bars"></i>';
+    menuBtn.className = 'menu-btn';
+    menuBtn.onclick = (e) => {
       e.stopPropagation();
-      if (confirm('Delete this snippet?')) {
-        await fetch(`/api/snippets/${snippet.id}`, { method: 'DELETE' });
-        showToast('Snippet deleted');
-        loadSnippets();
-      }
+      openEditModal(snippet);
     };
-    li.appendChild(delBtn);
+    li.appendChild(menuBtn);
     snippetList.appendChild(li);
   });
 }
@@ -173,22 +183,55 @@ function closeModal() {
   snippetForm.reset();
 }
 
+// --- Edit Modal Functions ---
+function openEditModal(snippet) {
+  currentEditingSnippet = snippet;
+  editSnippetTitle.value = snippet.title;
+  editSnippetCategory.value = snippet.category;
+  editSnippetTags.value = snippet.tags ? snippet.tags.join(', ') : '';
+  editSnippetContent.value = snippet.content;
+  editSnippetDescription.value = snippet.description || '';
+  editSnippetModal.classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeEditModal() {
+  editSnippetModal.classList.remove('show');
+  document.body.style.overflow = '';
+  editSnippetForm.reset();
+  currentEditingSnippet = null;
+}
+
 // --- Modal Event Listeners ---
 createSnippetBtn.addEventListener('click', openModal);
 closeSnippetModal.addEventListener('click', closeModal);
 cancelSnippet.addEventListener('click', closeModal);
 
-// Close modal when clicking outside
+// Edit modal event listeners
+closeEditModal.addEventListener('click', closeEditModal);
+cancelEdit.addEventListener('click', closeEditModal);
+
+// Close modals when clicking outside
 createSnippetModal.addEventListener('click', (e) => {
   if (e.target === createSnippetModal) {
     closeModal();
   }
 });
 
-// Close modal with Escape key
+editSnippetModal.addEventListener('click', (e) => {
+  if (e.target === editSnippetModal) {
+    closeEditModal();
+  }
+});
+
+// Close modals with Escape key
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && createSnippetModal.classList.contains('show')) {
-    closeModal();
+  if (e.key === 'Escape') {
+    if (createSnippetModal.classList.contains('show')) {
+      closeModal();
+    } else if (editSnippetModal.classList.contains('show')) {
+      closeEditModal();
+    }
   }
 });
 
@@ -212,6 +255,53 @@ snippetForm.addEventListener('submit', async (e) => {
     loadSnippets();
   } else {
     showToast('Failed to create snippet');
+  }
+});
+
+// Edit form submission
+editSnippetForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!currentEditingSnippet) return;
+  
+  const data = {
+    title: editSnippetTitle.value,
+    category: editSnippetCategory.value,
+    tags: editSnippetTags.value.split(',').map(t => t.trim()).filter(Boolean),
+    content: editSnippetContent.value,
+    description: editSnippetDescription.value
+  };
+  
+  const res = await fetch(`/api/snippets/${currentEditingSnippet.id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  
+  if (res.ok) {
+    showToast('Snippet updated successfully!');
+    closeEditModal();
+    loadSnippets();
+  } else {
+    showToast('Failed to update snippet');
+  }
+});
+
+// Delete button functionality
+deleteSnippetBtn.addEventListener('click', async () => {
+  if (!currentEditingSnippet) return;
+  
+  if (confirm(`Are you sure you want to delete "${currentEditingSnippet.title}"?`)) {
+    const res = await fetch(`/api/snippets/${currentEditingSnippet.id}`, {
+      method: 'DELETE'
+    });
+    
+    if (res.ok) {
+      showToast('Snippet deleted successfully!');
+      closeEditModal();
+      loadSnippets();
+    } else {
+      showToast('Failed to delete snippet');
+    }
   }
 });
 
