@@ -1,4 +1,6 @@
-// --- DOM Elements ---
+// --- DOM Elements --- (Updated: 2025-07-23 19:45)
+alert('JavaScript file is loading!');
+console.log('JavaScript file loaded at:', new Date().toISOString());
 const snippetList = document.getElementById('snippet-list');
 const builderList = document.getElementById('builder-list');
 const builderDropzone = document.getElementById('builder-dropzone');
@@ -12,6 +14,8 @@ const snippetCategory = document.getElementById('snippet-category');
 const snippetTags = document.getElementById('snippet-tags');
 const snippetContent = document.getElementById('snippet-content');
 const snippetDescription = document.getElementById('snippet-description');
+const snippetSearch = document.getElementById('snippet-search');
+const snippetCategories = document.getElementById('snippet-categories');
 
 // Modal elements
 const createSnippetBtn = document.getElementById('create-snippet-btn');
@@ -21,7 +25,7 @@ const cancelSnippet = document.getElementById('cancel-snippet');
 
 // Edit modal elements
 const editSnippetModal = document.getElementById('edit-snippet-modal');
-const closeEditModal = document.getElementById('close-edit-modal');
+const closeEditModalBtn = document.getElementById('close-edit-modal');
 const cancelEdit = document.getElementById('cancel-edit');
 const editSnippetForm = document.getElementById('edit-snippet-form');
 const editSnippetTitle = document.getElementById('edit-snippet-title');
@@ -38,19 +42,52 @@ let builderSnippets = [];
 let previewMode = 'markdown';
 
 // --- Load Snippets from API ---
-async function loadSnippets() {
-  const res = await fetch('/api/snippets');
-  snippets = await res.json();
-  renderSnippetList();
+async function loadSnippets(search = '', category = '') {
+  try {
+    let url = '/api/snippets';
+    const params = [];
+    
+    if (search) {
+      params.push(`search=${encodeURIComponent(search)}`);
+    }
+    
+    if (category) {
+      params.push(`category=${encodeURIComponent(category)}`);
+    }
+    
+    if (params.length > 0) {
+      url += '?' + params.join('&');
+    }
+    
+    console.log('Fetching snippets from:', url);
+    const res = await fetch(url);
+    console.log('Response status:', res.status);
+    
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+    
+    snippets = await res.json();
+    console.log('Loaded snippets:', snippets);
+    renderSnippetList();
+    renderCategoryFilters();
+  } catch (error) {
+    console.error('Error loading snippets:', error);
+    showToast('Failed to load snippets');
+  }
 }
 
 function renderSnippetList() {
+  console.log('renderSnippetList called with', snippets.length, 'snippets');
+  console.log('snippetList element:', snippetList);
   snippetList.innerHTML = '';
   snippets.forEach(snippet => {
+    console.log('Rendering snippet:', snippet.title);
     const li = document.createElement('li');
     li.draggable = true;
     li.dataset.id = snippet.id;
     li.addEventListener('dragstart', handleDragStart);
+    li.addEventListener('dragend', handleDragEnd);
 
     // Create content container
     const content = document.createElement('div');
@@ -77,10 +114,22 @@ function renderSnippetList() {
 
     li.appendChild(content);
 
+    // Add button (for click-to-add functionality)
+    const addBtn = document.createElement('button');
+    addBtn.innerHTML = '<i class="fa fa-plus"></i>';
+    addBtn.className = 'add-btn';
+    addBtn.title = 'Add to builder';
+    addBtn.onclick = (e) => {
+      e.stopPropagation();
+      addSnippetToBuilder(snippet);
+    };
+    li.appendChild(addBtn);
+
     // Menu button (sandwich menu)
     const menuBtn = document.createElement('button');
     menuBtn.innerHTML = '<i class="fa fa-bars"></i>';
     menuBtn.className = 'menu-btn';
+    menuBtn.title = 'Edit snippet';
     menuBtn.onclick = (e) => {
       e.stopPropagation();
       openEditModal(snippet);
@@ -135,6 +184,14 @@ function renderBuilderList() {
     li.appendChild(removeBtn);
     builderList.appendChild(li);
   });
+}
+
+// Function to add a snippet to the builder
+function addSnippetToBuilder(snippet) {
+  builderSnippets.push(snippet);
+  renderBuilderList();
+  updatePreview();
+  showToast('Snippet added to builder!');
 }
 
 function updatePreview() {
@@ -208,7 +265,7 @@ closeSnippetModal.addEventListener('click', closeModal);
 cancelSnippet.addEventListener('click', closeModal);
 
 // Edit modal event listeners
-closeEditModal.addEventListener('click', closeEditModal);
+closeEditModalBtn.addEventListener('click', closeEditModal);
 cancelEdit.addEventListener('click', closeEditModal);
 
 // Close modals when clicking outside
@@ -350,5 +407,82 @@ async function ensureTestSnippets() {
   }
 }
 
+// --- Search and Filter Functions ---
+function renderCategoryFilters() {
+  // Get unique categories from snippets
+  const categories = [...new Set(snippets.map(s => s.category))];
+  
+  // Clear existing filters
+  snippetCategories.innerHTML = '';
+  
+  // Add "All" filter
+  const allFilter = document.createElement('button');
+  allFilter.textContent = 'All';
+  allFilter.className = 'category-filter active';
+  allFilter.onclick = () => {
+    // Remove active class from all filters
+    document.querySelectorAll('.category-filter').forEach(btn => btn.classList.remove('active'));
+    allFilter.classList.add('active');
+    loadSnippets(snippetSearch.value, '');
+  };
+  snippetCategories.appendChild(allFilter);
+  
+  // Add category filters
+  categories.forEach(category => {
+    const btn = document.createElement('button');
+    btn.textContent = category;
+    btn.className = 'category-filter';
+    btn.onclick = () => {
+      // Remove active class from all filters
+      document.querySelectorAll('.category-filter').forEach(btn => btn.classList.remove('active'));
+      btn.classList.add('active');
+      loadSnippets(snippetSearch.value, category);
+    };
+    snippetCategories.appendChild(btn);
+  });
+}
+
+// Add search functionality
+snippetSearch.addEventListener('input', debounce(() => {
+  const searchTerm = snippetSearch.value.trim();
+  const activeCategory = document.querySelector('.category-filter.active');
+  const category = activeCategory && activeCategory.textContent !== 'All' ? activeCategory.textContent : '';
+  loadSnippets(searchTerm, category);
+}, 300));
+
+// Debounce helper function to limit API calls during typing
+function debounce(func, wait) {
+  let timeout;
+  return function() {
+    const context = this;
+    const args = arguments;
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      func.apply(context, args);
+    }, wait);
+  };
+}
+
 // --- Initial Load ---
+// Call this function immediately since the script is loaded at the bottom of the page
+console.log('Script loaded, DOM elements found:');
+console.log('snippetList:', snippetList);
+console.log('snippetCategories:', snippetCategories);
+
+// Test: Add a manual snippet to verify DOM structure
+if (snippetList) {
+  console.log('Adding test snippet manually...');
+  const testLi = document.createElement('li');
+  testLi.innerHTML = '<div class="snippet-content"><div class="snippet-title">TEST SNIPPET</div></div>';
+  testLi.style.background = 'red';
+  testLi.style.color = 'white';
+  testLi.style.padding = '10px';
+  testLi.style.margin = '5px';
+  snippetList.appendChild(testLi);
+  console.log('Test snippet added to DOM');
+} else {
+  console.error('snippetList element not found!');
+}
+
+console.log('Calling ensureTestSnippets...');
 ensureTestSnippets(); 
