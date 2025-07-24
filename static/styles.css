@@ -128,7 +128,7 @@ button:hover, .preview-toggle button.active {
   min-width: 0;
 }
 
-.snippet-title {
+.snippet-item {
   font-weight: 500;
   margin-bottom: 0.25rem;
   color: #333;

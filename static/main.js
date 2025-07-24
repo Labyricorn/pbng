@@ -7,7 +7,7 @@ const previewMarkdownBtn = document.getElementById('preview-markdown');
 const previewJsonBtn = document.getElementById('preview-json');
 const toast = document.getElementById('toast');
 const snippetForm = document.getElementById('snippet-form');
-const snippetTitle = document.getElementById('snippet-title');
+const snippetItem = document.getElementById('snippet-title');
 const snippetCategory = document.getElementById('snippet-category');
 const snippetTags = document.getElementById('snippet-tags');
 const snippetContent = document.getElementById('snippet-content');
@@ -26,7 +26,7 @@ const editSnippetModal = document.getElementById('edit-snippet-modal');
 const closeEditModalBtn = document.getElementById('close-edit-modal');
 const cancelEdit = document.getElementById('cancel-edit');
 const editSnippetForm = document.getElementById('edit-snippet-form');
-const editSnippetTitle = document.getElementById('edit-snippet-title');
+const editSnippetItem = document.getElementById('edit-snippet-title');
 const editSnippetCategory = document.getElementById('edit-snippet-category');
 const editSnippetTags = document.getElementById('edit-snippet-tags');
 const editSnippetContent = document.getElementById('edit-snippet-content');
@@ -85,11 +85,11 @@ function renderSnippetList() {
     const content = document.createElement('div');
     content.className = 'snippet-content';
 
-    // Title
-    const title = document.createElement('div');
-    title.className = 'snippet-title';
-    title.textContent = snippet.title;
-    content.appendChild(title);
+    // Item
+    const item = document.createElement('div');
+    item.className = 'snippet-item';
+    item.textContent = snippet.item;
+    content.appendChild(item);
 
     // Tags
     if (snippet.tags && snippet.tags.length > 0) {
@@ -164,7 +164,7 @@ function renderBuilderList() {
   builderList.innerHTML = '';
   builderSnippets.forEach((snippet, idx) => {
     const li = document.createElement('li');
-    li.textContent = snippet.title;
+    li.textContent = snippet.item;
     // Remove button
     const removeBtn = document.createElement('button');
     removeBtn.innerHTML = '<i class="fa fa-times"></i>';
@@ -197,7 +197,7 @@ function updatePreview() {
     previewContent.className = 'json-preview';
     // Render each snippet object in its own <pre> with spacing
     previewContent.innerHTML = builderSnippets
-      .map(s => `<pre style="margin-bottom:1em;">${escapeHtml(JSON.stringify({ title: s.title, content: s.content }, null, 2))}</pre>`)
+      .map(s => `<pre style="margin-bottom:1em;">${escapeHtml(JSON.stringify({ item: s.item, content: s.content }, null, 2))}</pre>`)
       .join('');
   }
 }
@@ -235,7 +235,7 @@ function closeModal() {
 // --- Edit Modal Functions ---
 function openEditModal(snippet) {
   currentEditingSnippet = snippet;
-  editSnippetTitle.value = snippet.title;
+  editSnippetItem.value = snippet.item;
   editSnippetCategory.value = snippet.category;
   editSnippetTags.value = snippet.tags ? snippet.tags.join(', ') : '';
   editSnippetContent.value = snippet.content;
@@ -287,7 +287,7 @@ document.addEventListener('keydown', (e) => {
 snippetForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const data = {
-    title: snippetTitle.value,
+    item: snippetItem.value,
     category: snippetCategory.value,
     tags: snippetTags.value.split(',').map(t => t.trim()).filter(Boolean),
     content: snippetContent.value,
@@ -313,7 +313,7 @@ editSnippetForm.addEventListener('submit', async (e) => {
   if (!currentEditingSnippet) return;
   
   const data = {
-    title: editSnippetTitle.value,
+    item: editSnippetItem.value,
     category: editSnippetCategory.value,
     tags: editSnippetTags.value.split(',').map(t => t.trim()).filter(Boolean),
     content: editSnippetContent.value,
@@ -339,7 +339,7 @@ editSnippetForm.addEventListener('submit', async (e) => {
 deleteSnippetBtn.addEventListener('click', async () => {
   if (!currentEditingSnippet) return;
   
-  if (confirm(`Are you sure you want to delete "${currentEditingSnippet.title}"?`)) {
+  if (confirm(`Are you sure you want to delete "${currentEditingSnippet.item}"?`)) {
     const res = await fetch(`/api/snippets/${currentEditingSnippet.id}`, {
       method: 'DELETE'
     });
@@ -366,21 +366,21 @@ async function ensureTestSnippets() {
   if (snippets.length === 0) {
     const testSnips = [
       {
-        title: 'Role: Assistant',
+        item: 'Role: Assistant',
         category: 'Role',
         tags: ['role', 'assistant'],
         content: 'You are a helpful assistant.',
         description: 'The AI role.'
       },
       {
-        title: 'Task: Summarize',
+        item: 'Task: Summarize',
         category: 'Task',
         tags: ['task', 'summarize'],
         content: 'Summarize the following text: [text_to_summarize]',
         description: 'Summarize input.'
       },
       {
-        title: 'Format: Markdown',
+        item: 'Format: Markdown',
         category: 'Format',
         tags: ['format', 'markdown'],
         content: 'Respond in markdown format.',
