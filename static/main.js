@@ -1,6 +1,4 @@
-// --- DOM Elements --- (Updated: 2025-07-23 19:45)
-alert('JavaScript file is loading!');
-console.log('JavaScript file loaded at:', new Date().toISOString());
+// --- DOM Elements ---
 const snippetList = document.getElementById('snippet-list');
 const builderList = document.getElementById('builder-list');
 const builderDropzone = document.getElementById('builder-dropzone');
@@ -59,16 +57,13 @@ async function loadSnippets(search = '', category = '') {
       url += '?' + params.join('&');
     }
     
-    console.log('Fetching snippets from:', url);
     const res = await fetch(url);
-    console.log('Response status:', res.status);
     
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${res.status}`);
     }
     
     snippets = await res.json();
-    console.log('Loaded snippets:', snippets);
     renderSnippetList();
     renderCategoryFilters();
   } catch (error) {
@@ -78,11 +73,8 @@ async function loadSnippets(search = '', category = '') {
 }
 
 function renderSnippetList() {
-  console.log('renderSnippetList called with', snippets.length, 'snippets');
-  console.log('snippetList element:', snippetList);
   snippetList.innerHTML = '';
   snippets.forEach(snippet => {
-    console.log('Rendering snippet:', snippet.title);
     const li = document.createElement('li');
     li.draggable = true;
     li.dataset.id = snippet.id;
@@ -465,24 +457,4 @@ function debounce(func, wait) {
 
 // --- Initial Load ---
 // Call this function immediately since the script is loaded at the bottom of the page
-console.log('Script loaded, DOM elements found:');
-console.log('snippetList:', snippetList);
-console.log('snippetCategories:', snippetCategories);
-
-// Test: Add a manual snippet to verify DOM structure
-if (snippetList) {
-  console.log('Adding test snippet manually...');
-  const testLi = document.createElement('li');
-  testLi.innerHTML = '<div class="snippet-content"><div class="snippet-title">TEST SNIPPET</div></div>';
-  testLi.style.background = 'red';
-  testLi.style.color = 'white';
-  testLi.style.padding = '10px';
-  testLi.style.margin = '5px';
-  snippetList.appendChild(testLi);
-  console.log('Test snippet added to DOM');
-} else {
-  console.error('snippetList element not found!');
-}
-
-console.log('Calling ensureTestSnippets...');
 ensureTestSnippets(); 
