@@ -33,6 +33,13 @@ const editSnippetContent = document.getElementById('edit-snippet-content');
 const editSnippetDescription = document.getElementById('edit-snippet-description');
 const deleteSnippetBtn = document.getElementById('delete-snippet');
 
+// --- Prompt Save & Browse Elements ---
+const savePromptBtn = document.getElementById('save-prompt');
+const browsePromptsBtn = document.getElementById('browse-prompts');
+const browsePromptsModal = document.getElementById('browse-prompts-modal');
+const closeBrowsePromptsModal = document.getElementById('close-browse-prompts-modal');
+const promptsList = document.getElementById('prompts-list');
+
 let currentEditingSnippet = null;
 
 let snippets = [];
@@ -353,6 +360,110 @@ deleteSnippetBtn.addEventListener('click', async () => {
     }
   }
 });
+
+// --- Save Prompt Functionality ---
+savePromptBtn.addEventListener('click', async () => {
+  if (builderSnippets.length === 0) {
+    showToast('Add snippets to builder before saving!');
+    return;
+  }
+  const title = prompt('Enter a title for this prompt:');
+  if (!title) return;
+  const snippet_ids = builderSnippets.map(s => s.id);
+  const content = builderSnippets.map(s => s.content).join('\n\n');
+  const res = await fetch('/api/prompts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title, content, snippet_ids })
+  });
+  if (res.ok) {
+    showToast('Prompt saved!');
+  } else {
+    showToast('Failed to save prompt');
+  }
+});
+
+// --- Browse Prompts Functionality ---
+browsePromptsBtn.addEventListener('click', async () => {
+  await loadPrompts();
+  browsePromptsModal.classList.add('show');
+  document.body.style.overflow = 'hidden';
+});
+
+closeBrowsePromptsModal.addEventListener('click', closeBrowseModal);
+
+function closeBrowseModal() {
+  browsePromptsModal.classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+// Close modal when clicking outside
+browsePromptsModal.addEventListener('click', (e) => {
+  if (e.target === browsePromptsModal) {
+    closeBrowseModal();
+  }
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && browsePromptsModal.classList.contains('show')) {
+    closeBrowseModal();
+  }
+});
+
+async function loadPrompts() {
+  const res = await fetch('/api/prompts');
+  if (!res.ok) {
+    showToast('Failed to load prompts');
+    return;
+  }
+  const prompts = await res.json();
+  renderPromptsList(prompts);
+}
+
+function renderPromptsList(prompts) {
+  promptsList.innerHTML = '';
+  if (prompts.length === 0) {
+    promptsList.innerHTML = '<p>No saved prompts found.</p>';
+    return;
+  }
+  prompts.forEach(prompt => {
+    const div = document.createElement('div');
+    div.className = 'prompt-entry';
+    const title = document.createElement('div');
+    title.className = 'prompt-title';
+    title.textContent = prompt.title;
+    div.appendChild(title);
+    const preview = document.createElement('pre');
+    preview.className = 'prompt-preview';
+    preview.textContent = prompt.content;
+    div.appendChild(preview);
+    const loadBtn = document.createElement('button');
+    loadBtn.textContent = 'Load into Builder';
+    loadBtn.onclick = () => loadPromptIntoBuilder(prompt);
+    div.appendChild(loadBtn);
+    promptsList.appendChild(div);
+  });
+}
+
+async function loadPromptIntoBuilder(prompt) {
+  // Fetch snippets by IDs to get full snippet objects
+  if (!prompt.snippet_ids || prompt.snippet_ids.length === 0) {
+    showToast('No snippets found for this prompt');
+    return;
+  }
+  const res = await fetch('/api/snippets');
+  if (!res.ok) {
+    showToast('Failed to load snippets');
+    return;
+  }
+  const allSnippets = await res.json();
+  builderSnippets = allSnippets.filter(s => prompt.snippet_ids.includes(s.id));
+  renderBuilderList();
+  updatePreview();
+  closeBrowseModal();
+  showToast('Prompt loaded into builder!');
+}
 
 function showToast(msg) {
   toast.textContent = msg;

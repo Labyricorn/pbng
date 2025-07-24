@@ -1,7 +1,7 @@
 import json
 import re
 from flask import Blueprint, request, jsonify
-from models import Snippet, Prompt, db
+from models import Snippet, Prompt, Tag, db
 
 api_bp = Blueprint('api', __name__)
 
@@ -22,7 +22,7 @@ def list_snippets():
         'description': s.description,
         'content': s.content,
         'category': s.category,
-        'tags': json.loads(s.tags) if s.tags else [],
+        'tags': [tag.name for tag in s.tags],
         'created_at': s.created_at.isoformat(),
         'updated_at': s.updated_at.isoformat()
     } for s in snippets])
@@ -30,12 +30,20 @@ def list_snippets():
 @api_bp.route('/snippets', methods=['POST'])
 def create_snippet():
     data = request.get_json()
+    tag_names = data.get('tags', [])
+    tags = []
+    for name in tag_names:
+        tag = Tag.query.filter_by(name=name).first()
+        if not tag:
+            tag = Tag(name=name)
+            db.session.add(tag)
+        tags.append(tag)
     snippet = Snippet(
         item=data.get('item'),
         description=data.get('description'),
         content=data.get('content'),
         category=data.get('category'),
-        tags=json.dumps(data.get('tags', []))
+        tags=tags
     )
     db.session.add(snippet)
     db.session.commit()
@@ -49,7 +57,15 @@ def update_snippet(id):
     snippet.description = data.get('description', snippet.description)
     snippet.content = data.get('content', snippet.content)
     snippet.category = data.get('category', snippet.category)
-    snippet.tags = json.dumps(data.get('tags', json.loads(snippet.tags) if snippet.tags else []))
+    tag_names = data.get('tags', [tag.name for tag in snippet.tags])
+    tags = []
+    for name in tag_names:
+        tag = Tag.query.filter_by(name=name).first()
+        if not tag:
+            tag = Tag(name=name)
+            db.session.add(tag)
+        tags.append(tag)
+    snippet.tags = tags
     db.session.commit()
     return jsonify({'success': True})
 
@@ -75,7 +91,7 @@ def list_prompts():
         'id': p.id,
         'title': p.title,
         'content': p.content,
-        'snippet_ids': json.loads(p.snippet_ids) if p.snippet_ids else [],
+        'snippet_ids': [s.id for s in p.snippets],
         'created_at': p.created_at.isoformat(),
         'updated_at': p.updated_at.isoformat()
     } for p in prompts])
@@ -83,10 +99,12 @@ def list_prompts():
 @api_bp.route('/prompts', methods=['POST'])
 def create_prompt():
     data = request.get_json()
+    snippet_ids = data.get('snippet_ids', [])
+    snippets = Snippet.query.filter(Snippet.id.in_(snippet_ids)).all() if snippet_ids else []
     prompt = Prompt(
         title=data.get('title'),
         content=data.get('content'),
-        snippet_ids=json.dumps(data.get('snippet_ids', []))
+        snippets=snippets
     )
     db.session.add(prompt)
     db.session.commit()
@@ -98,7 +116,8 @@ def update_prompt(id):
     data = request.get_json()
     prompt.title = data.get('title', prompt.title)
     prompt.content = data.get('content', prompt.content)
-    prompt.snippet_ids = json.dumps(data.get('snippet_ids', json.loads(prompt.snippet_ids) if prompt.snippet_ids else []))
+    snippet_ids = data.get('snippet_ids', [s.id for s in prompt.snippets])
+    prompt.snippets = Snippet.query.filter(Snippet.id.in_(snippet_ids)).all() if snippet_ids else []
     db.session.commit()
     return jsonify({'success': True})
 
@@ -118,7 +137,7 @@ def export_prompt(id):
             'id': prompt.id,
             'title': prompt.title,
             'content': prompt.content,
-            'snippet_ids': json.loads(prompt.snippet_ids) if prompt.snippet_ids else [],
+            'snippet_ids': [s.id for s in prompt.snippets],
             'created_at': prompt.created_at.isoformat(),
             'updated_at': prompt.updated_at.isoformat()
         })

@@ -454,6 +454,39 @@ button:hover, .preview-toggle button.active {
   color: #388E3C;
 }
 
+/* Browse Prompts Modal Styles */
+#browse-prompts-modal .modal-content {
+  max-width: 600px;
+}
+.prompt-entry {
+  background: #f8f8ff;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(102,126,234,0.06);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.prompt-title {
+  font-weight: bold;
+  color: #764ba2;
+  font-size: 1.1rem;
+}
+.prompt-preview {
+  background: #fff;
+  border-radius: 0.25rem;
+  padding: 0.5rem;
+  font-size: 0.95rem;
+  color: #333;
+  max-height: 120px;
+  overflow-y: auto;
+}
+.prompt-entry button {
+  align-self: flex-end;
+  margin-top: 0.5rem;
+}
+
 @media (max-width: 1100px) {
   .three-panel {
     flex-direction: column;

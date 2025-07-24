@@ -36,6 +36,7 @@
                 </ul>
             </div>
             <button id="save-prompt"><i class="fa-solid fa-save"></i> Save Prompt</button>
+            <button id="browse-prompts"><i class="fa-solid fa-folder-open"></i> Browse Prompts</button>
         </section>
         <section id="live-preview" class="panel">
             <h2>Live Preview</h2>
@@ -126,6 +127,21 @@
                     </div>
                 </div>
             </form>
+        </div>
+    </div>
+    
+    <!-- Browse Prompts Modal -->
+    <div id="browse-prompts-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Browse Saved Prompts</h3>
+                <button class="modal-close" id="close-browse-prompts-modal">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <div id="prompts-list">
+                <!-- Saved prompts will be loaded here -->
+            </div>
         </div>
     </div>
     
