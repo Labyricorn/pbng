@@ -18,19 +18,14 @@
     <main class="three-panel">
         <section id="snippet-library" class="panel">
             <h2>Snippet Library</h2>
-            <form id="snippet-form">
-                <input type="text" id="snippet-title" placeholder="Title" required>
-                <input type="text" id="snippet-category" placeholder="Category" required>
-                <input type="text" id="snippet-tags" placeholder="Tags (comma separated)">
-                <textarea id="snippet-content" placeholder="Content" required style="width:100%;margin-bottom:0.5rem;"></textarea>
-                <input type="text" id="snippet-description" placeholder="Description">
-                <button type="submit">Add Snippet</button>
-            </form>
             <input type="text" id="snippet-search" placeholder="Search snippets...">
             <div id="snippet-categories"></div>
             <ul id="snippet-list">
                 <!-- Snippet items will be loaded here -->
             </ul>
+            <button id="create-snippet-btn" class="create-btn">
+                <i class="fa-solid fa-plus"></i> Create New Snippet
+            </button>
         </section>
         <section id="prompt-builder" class="panel">
             <h2>Prompt Builder</h2>
@@ -53,6 +48,45 @@
             </div>
         </section>
     </main>
+    
+    <!-- Create Snippet Modal -->
+    <div id="create-snippet-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create New Snippet</h3>
+                <button class="modal-close" id="close-snippet-modal">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <form id="snippet-form">
+                <div class="form-group">
+                    <label for="snippet-title">Title *</label>
+                    <input type="text" id="snippet-title" placeholder="Enter snippet title" required>
+                </div>
+                <div class="form-group">
+                    <label for="snippet-category">Category *</label>
+                    <input type="text" id="snippet-category" placeholder="Enter category" required>
+                </div>
+                <div class="form-group">
+                    <label for="snippet-tags">Tags</label>
+                    <input type="text" id="snippet-tags" placeholder="Enter tags (comma separated)">
+                </div>
+                <div class="form-group">
+                    <label for="snippet-content">Content *</label>
+                    <textarea id="snippet-content" placeholder="Enter snippet content" required rows="6"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="snippet-description">Description</label>
+                    <input type="text" id="snippet-description" placeholder="Enter description (optional)">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="cancel-snippet">Cancel</button>
+                    <button type="submit" class="btn-primary">Create Snippet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
     <div id="toast" class="toast"></div>
     <script src="main.js"></script>
 </body>

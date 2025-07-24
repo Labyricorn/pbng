@@ -1,8 +1,7 @@
 import json
 import re
 from flask import Blueprint, request, jsonify
-from models import Snippet, Prompt
-from app import db
+from models import Snippet, Prompt, db
 
 api_bp = Blueprint('api', __name__)
 

@@ -13,6 +13,12 @@ const snippetTags = document.getElementById('snippet-tags');
 const snippetContent = document.getElementById('snippet-content');
 const snippetDescription = document.getElementById('snippet-description');
 
+// Modal elements
+const createSnippetBtn = document.getElementById('create-snippet-btn');
+const createSnippetModal = document.getElementById('create-snippet-modal');
+const closeSnippetModal = document.getElementById('close-snippet-modal');
+const cancelSnippet = document.getElementById('cancel-snippet');
+
 let snippets = [];
 let builderSnippets = [];
 let previewMode = 'markdown';
@@ -28,13 +34,39 @@ function renderSnippetList() {
   snippetList.innerHTML = '';
   snippets.forEach(snippet => {
     const li = document.createElement('li');
-    li.textContent = snippet.title;
     li.draggable = true;
     li.dataset.id = snippet.id;
     li.addEventListener('dragstart', handleDragStart);
+
+    // Create content container
+    const content = document.createElement('div');
+    content.className = 'snippet-content';
+
+    // Title
+    const title = document.createElement('div');
+    title.className = 'snippet-title';
+    title.textContent = snippet.title;
+    content.appendChild(title);
+
+    // Tags
+    if (snippet.tags && snippet.tags.length > 0) {
+      const tagsContainer = document.createElement('div');
+      tagsContainer.className = 'snippet-tags';
+      snippet.tags.forEach(tag => {
+        const tagSpan = document.createElement('span');
+        tagSpan.className = 'tag';
+        tagSpan.textContent = tag;
+        tagsContainer.appendChild(tagSpan);
+      });
+      content.appendChild(tagsContainer);
+    }
+
+    li.appendChild(content);
+
     // Delete button
     const delBtn = document.createElement('button');
     delBtn.innerHTML = '<i class="fa fa-trash"></i>';
+    delBtn.className = 'delete-btn';
     delBtn.onclick = async (e) => {
       e.stopPropagation();
       if (confirm('Delete this snippet?')) {
@@ -113,7 +145,7 @@ function updatePreview() {
 
 // Helper to escape HTML for JSON preview
 function escapeHtml(str) {
-  return str.replace(/[&<>]/g, tag => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[tag]));
+  return str.replace(/[&<>]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[tag]));
 }
 
 previewMarkdownBtn.onclick = () => {
@@ -128,6 +160,37 @@ previewJsonBtn.onclick = () => {
   previewMarkdownBtn.classList.remove('active');
   updatePreview();
 };
+
+// --- Modal Functions ---
+function openModal() {
+  createSnippetModal.classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  createSnippetModal.classList.remove('show');
+  document.body.style.overflow = '';
+  snippetForm.reset();
+}
+
+// --- Modal Event Listeners ---
+createSnippetBtn.addEventListener('click', openModal);
+closeSnippetModal.addEventListener('click', closeModal);
+cancelSnippet.addEventListener('click', closeModal);
+
+// Close modal when clicking outside
+createSnippetModal.addEventListener('click', (e) => {
+  if (e.target === createSnippetModal) {
+    closeModal();
+  }
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && createSnippetModal.classList.contains('show')) {
+    closeModal();
+  }
+});
 
 snippetForm.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -144,11 +207,11 @@ snippetForm.addEventListener('submit', async (e) => {
     body: JSON.stringify(data)
   });
   if (res.ok) {
-    showToast('Snippet added!');
-    snippetForm.reset();
+    showToast('Snippet created successfully!');
+    closeModal();
     loadSnippets();
   } else {
-    showToast('Failed to add snippet');
+    showToast('Failed to create snippet');
   }
 });
 

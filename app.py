@@ -1,13 +1,12 @@
 import os
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from dotenv import load_dotenv
+from models import db
 
 # Load environment variables from .env
 load_dotenv()
 
-db = SQLAlchemy()
 migrate = Migrate()
 
 def create_app():
